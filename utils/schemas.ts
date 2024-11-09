@@ -48,4 +48,12 @@ function validateFile() {
         }, 'File must be an image');
 }
 
+export const categoriesSchema = z.object({
+    categories: z.array(z.string().min(1, "Category name cannot be empty")),
+});
 
+export const topicSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, { message: 'Name cannot be empty' }),
+    nameInChinese: z.string().min(1, { message: 'Name in Chinese cannot be empty' }),
+})

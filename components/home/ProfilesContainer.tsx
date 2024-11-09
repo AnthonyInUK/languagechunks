@@ -1,5 +1,5 @@
 import { fetchAllProfile } from '@/utils/actions';
-import ProfilesList from './ProfilesList';
+import ProfilesList from './TopicList';
 import EmptyList from './EmptyList';
 import type { ProfileCardProps } from '@/utils/types';
 

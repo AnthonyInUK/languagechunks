@@ -1,22 +1,54 @@
-datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  directUrl         = env("DIRECT_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
 model Profile {
-  id           String     @id @default(uuid())
-  clerkId      String     @unique
+  id           String   @id @default(uuid())
+  clerkId      String   @unique
   firstName    String
   lastName     String
   username     String
   email        String
   profileImage String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
 
+model Category {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  topics Topic[]
+}
+
+model Topic {
+  id             String          @id @default(uuid())
+  name           String
+  categoryId     String
+  nameInChinese  String?
+  topicImage String @default("/images/default_image.png")
+  languageChunks LanguageChunk[]
+  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  transcripts    Transcript[]
+}
+
+model LanguageChunk {
+  id          String @id @default(uuid())
+  type        String
+  content     String
+  translation String
+  topicId     String
+  topic       Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+model Transcript {
+  id      String @id @default(uuid())
+  content String
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }

@@ -12,6 +12,9 @@ type FormInputProps = {
 
 function FormInput(props: FormInputProps) {
     const { label, type, name, defaultValue, placeholder } = props;
+    if (type === "hidden") {
+        return <input id={name} name={name} defaultValue={defaultValue} type="hidden" />;
+    }
     return (
         <div className='mb-2'>
             <Label htmlFor={name} className='capitalize'>{label || name}</Label>

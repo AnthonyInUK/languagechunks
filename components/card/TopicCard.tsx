@@ -1,23 +1,23 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ProfileCardProps } from '@/utils/types';
+import { TopicCardProps } from '@/utils/types';
 
 
-function ProfileCard({ profile }: { profile: ProfileCardProps }) {
-    const { name, image, id, email } = profile
+function TopicCard({ topic }: { topic: TopicCardProps }) {
+    const { name, nameInChinese, id } = topic
 
     return (
         <article className='group relative'>
             <Link href={`/properties/${id}`}>
                 <div className='relative h-[300px] mb-2 overflow-hidden rounded-md'>
-                    <Image
+                    {/* <Image
                         src={image}
                         fill
                         sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw'
                         alt={name}
                         className='rounded-md object-cover transform group-hover:scale-110 transition-transform duration-500'
-                    />
+                    /> */}
                 </div>
                 <div className='flex justify-between items-center'>
                     <h3 className='text-sm font-semibold mt-1'>
@@ -26,7 +26,7 @@ function ProfileCard({ profile }: { profile: ProfileCardProps }) {
                     {/* property rating */}
                 </div>
                 <p className='text-sm mt-1 text-muted-foreground '>
-                    {email}
+                    {nameInChinese}
                 </p>
                 <div className='flex justify-between items-center mt-1'>
                 </div>
@@ -36,4 +36,4 @@ function ProfileCard({ profile }: { profile: ProfileCardProps }) {
     )
 }
 
-export default ProfileCard
+export default TopicCard

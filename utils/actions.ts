@@ -1,12 +1,12 @@
 'use server'
 
-import { imageSchema, profileSchema, validateWithZodSchema } from "./schemas";
-import db from './db';
+import { imageSchema, profileSchema, topicSchema, validateWithZodSchema } from "./schemas";
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadImage } from "./supbase";
-
+import db from './db';
+import { type actionFunction } from '../utils/types';
 
 const getAuthUser = async () => {
     const user = await currentUser()
@@ -114,9 +114,8 @@ export const updateProfileAction = async (prevState: any, formData: FormData)
 }
 
 export const updateProfileImageAction = async (
-    prevState: any,
-    formData: FormData
-): Promise<{ message: string }> => {
+    prevState: any, formData: FormData
+) => {
     const user = await getAuthUser();
     try {
         const image = formData.get('image') as File;
@@ -137,3 +136,113 @@ export const updateProfileImageAction = async (
         return renderError(error);
     }
 };
+
+export const updateTopicImageAction = async (prevState: any, formData: FormData) => {
+    try {
+        console.log(formData);
+        const id = formData.get('id') as string | null;
+        if (!id) {
+            throw new Error("ID is required to update the topic image.");
+        }
+
+        const image = formData.get('image') as File;
+        const validatedFields = validateWithZodSchema(imageSchema, { image });
+        const fullPath = await uploadImage(validatedFields.image);
+
+        await db.topic.update({
+            where: { id },
+            data: { topicImage: fullPath },
+        });
+
+        revalidatePath('/topics');
+        return { message: 'Topic image updated successfully' };
+    } catch (error) {
+        return renderError(error);
+    }
+};
+
+
+export const fetchCategories = async () => {
+    const categories = await db.category.findMany({});
+    if (!categories) throw new Error("There are no results");
+    return categories;
+}
+
+export const fetchTopics = async ({ search = '', category }: { search?: string, category?: string }) => {
+    const searchString = typeof search === 'string' ? search : '';
+
+    const whereCondition: Record<string, any> = {};
+    if (category) {
+        whereCondition.categoryId = category;
+
+    }
+
+    if (searchString) {
+        whereCondition.OR = [
+            { name: { contains: searchString, mode: 'insensitive' } },
+            { nameInChinese: { contains: searchString, mode: 'insensitive' } }
+        ];
+    }
+    const topicLists = await db.topic.findMany({
+        where: Object.keys(whereCondition).length ? whereCondition : undefined,
+        select: {
+            id: true,
+            name: true,
+            nameInChinese: true,
+            topicImage: true,
+        },
+    });
+    return topicLists;
+};
+
+export const fetchTopicById = async (id: string) => {
+    const topic = await db.topic.findUnique({
+        where: {
+            id,
+        },
+        select: {
+            name: true,
+            nameInChinese: true,
+            topicImage: true,
+        }
+    })
+    return topic;
+}
+
+export const updateTopic = async (prevState: any,
+    formData: FormData): Promise<{ message: string }> => {
+    try {
+        const id = formData.get('id') as string | null;
+        if (!id || typeof id !== 'string') {
+            throw new Error('Invalid or missing ID');
+        }
+        const rawData = Object.fromEntries(formData);
+        const validatedFields = validateWithZodSchema(topicSchema, rawData);
+        await db.topic.update({
+            where: {
+                id: id
+            },
+            data: validatedFields,
+        })
+        revalidatePath('/topics')
+        return { message: 'topic updated sucessfully' };
+    } catch (error) {
+        return renderError(error);
+    }
+}
+
+export const fetchLanguageChunks = async (id: string) => {
+    const languageChunk = await db.languageChunk.findMany({
+        where: {
+            id: id
+        },
+        select: {
+            id: true,
+            content: true,
+            translation: true,
+        },
+    })
+    return languageChunk;
+}
+
+

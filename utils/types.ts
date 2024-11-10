@@ -15,6 +15,7 @@ export type TopicCardProps = {
     id: string;
     name: string;
     nameInChinese: string | null;
+    topicImage: string
 };
 
 

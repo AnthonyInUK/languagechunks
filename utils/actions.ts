@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadImage } from "./supbase";
 import db from './db';
-import { type actionFunction } from '../utils/types';
 
 const getAuthUser = async () => {
     const user = await currentUser()
@@ -174,7 +173,6 @@ export const fetchTopics = async ({ search = '', category }: { search?: string, 
     const whereCondition: Record<string, any> = {};
     if (category) {
         whereCondition.categoryId = category;
-
     }
 
     if (searchString) {
@@ -190,6 +188,12 @@ export const fetchTopics = async ({ search = '', category }: { search?: string, 
             name: true,
             nameInChinese: true,
             topicImage: true,
+            category: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            }
         },
     });
     return topicLists;

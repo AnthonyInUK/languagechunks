@@ -40,8 +40,10 @@ model Topic {
 model LanguageChunk {
   id          String @id @default(uuid())
   type        String
+  chunk       String
   content     String
   translation String
+  image       String
   topicId     String
   topic       Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }

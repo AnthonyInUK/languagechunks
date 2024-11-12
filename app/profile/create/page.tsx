@@ -2,14 +2,18 @@ import { SubmitButton } from "@/components/form/Buttons";
 import FormContainer from "@/components/form/FormContainer";
 import FormInput from "@/components/form/FormInput";
 import { createProfileAction } from "@/utils/actions";
-
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 async function createProfilePage() {
     const user = await currentUser();
-    console.log(user);
-    if (user?.privateMetadata?.hasProfile) redirect('/')
+    if (user) {
+        console.log(user.privateMetadata)
+    }
+    
+    if (user?.privateMetadata?.hasProfile === true) {
+        redirect('/')
+    }
     return (<section>
         <h1 className='text-2xl font-semibold mb-8 capitalize'>new user</h1>
         <div className='border p-8 rounded-md'>

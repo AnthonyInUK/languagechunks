@@ -12,5 +12,5 @@ function TopicList({ topics }: { topics: TopicCardProps[] }) {
   )
 }
 
- 
+
 export default TopicList

@@ -24,7 +24,7 @@ function NavSearch() {
         }
     }, [searchParams?.get('search')]);
     return (
-        <Input className="max-w-xs dark:bg-muted" placeholder="find a property..." type="text" onChange={(e) => { setSearch(e.target.value); handleSearch(e.target.value) }} value={search} />
+        <Input className="hidden md:block w-64 px-4 py-2 border border-gray-300 rounded-md max-w-xs dark:bg-muted ml-auto" placeholder="find a topic..." type="text" onChange={(e) => { setSearch(e.target.value); handleSearch(e.target.value) }} value={search} />
     )
 }
 export default NavSearch

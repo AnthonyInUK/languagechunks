@@ -1,11 +1,14 @@
 'use server'
 
 import { imageSchema, profileSchema, topicSchema, validateWithZodSchema } from "./schemas";
-import { clerkClient, currentUser } from '@clerk/nextjs/server';
+import { clerkClient, currentUser, getAuth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadImage } from "./supbase";
+import Redis from 'ioredis';
 import db from './db';
+
+const redis = new Redis();
 
 const getAuthUser = async () => {
     const user = await currentUser()
@@ -25,6 +28,22 @@ export const createProfileAction = async (prevState: any, formData: FormData) =>
     try {
         const user = await currentUser();
         if (!user) throw new Error("Please login to create a profile");
+
+        // const existingProfile = await db.profile.findUnique({
+        //     where: {
+        //         clerkId: user.id
+        //     }
+        // });
+
+        // if (user.privateMetadata?.hasProfile && !existingProfile) {
+        //     await clerkClient.users.updateUserMetadata(user.id, {
+        //         privateMetadata: { hasProfile: false }
+        //     });
+        // }
+        // if (existingProfile) {
+        //     throw new Error("Profile already exists.");
+        // }
+
         const rawData = Object.fromEntries(formData);
         const validatedFields = validateWithZodSchema(profileSchema, rawData);
         await db.profile.create({
@@ -37,7 +56,7 @@ export const createProfileAction = async (prevState: any, formData: FormData) =>
         });
         await clerkClient.users.updateUserMetadata(user.id, {
             privateMetadata: {
-                hasProfile: true
+                hasProfile: false
             }
         })
 
@@ -114,7 +133,7 @@ export const updateProfileAction = async (prevState: any, formData: FormData)
 
 export const updateProfileImageAction = async (
     prevState: any, formData: FormData
-) => {
+): Promise<{ message: string }> => {
     const user = await getAuthUser();
     try {
         const image = formData.get('image') as File;
@@ -169,7 +188,17 @@ export const fetchCategories = async () => {
 
 export const fetchTopics = async ({ search = '', category }: { search?: string, category?: string }) => {
     const searchString = typeof search === 'string' ? search : '';
+    category = "be2fdf2e-c7e9-4456-921c-06c6c919e21d";
 
+    const cacheKey = `topics:category:${category}:search:${searchString}`;
+    //get data from cache
+    const cachedTopics = await redis.get(cacheKey);
+    if (cachedTopics) {
+        console.log('Cache hit');
+        return JSON.parse(cachedTopics);
+    }
+    console.log('Cache miss');
+    //get data from db
     const whereCondition: Record<string, any> = {};
     if (category) {
         whereCondition.categoryId = category;
@@ -196,6 +225,7 @@ export const fetchTopics = async ({ search = '', category }: { search?: string, 
             }
         },
     });
+    await redis.set(cacheKey, JSON.stringify(topicLists), 'EX', 60);
     return topicLists;
 };
 
@@ -234,6 +264,71 @@ export const updateTopic = async (prevState: any,
         return renderError(error);
     }
 }
+
+export const fetchFavourites = async () => {
+    const user = await getAuthUser();
+    const favourites = await db.favorite.findMany({
+        where: {
+            profileId: user.id,
+        },
+        select: {
+            topic: {
+                select: {
+                    id: true,
+                    name: true,
+                    nameInChinese: true,
+                    topicImage: true,
+                },
+            },
+        },
+    });
+    return favourites.map((favourite) => favourite.topic);
+}
+
+export const fetchFavouriteId = async ({ topicId }: { topicId: string }) => {
+    const user = await getAuthUser()
+    const favorite = await db.favorite.findFirst({
+        where: {
+            topicId,
+            profileId: user.id,
+        },
+        select: {
+            id: true,
+        },
+    });
+    return favorite?.id || null;
+}
+
+export const toggleFavouriteAction = async (prevState: {
+    topicId: string;
+    favouriteId: string | null;
+    pathname: string;
+}) => {
+    const user = await getAuthUser();
+    console.log("用户ID是", user.id)
+    const { topicId, favouriteId, pathname } = prevState;
+    try {
+        if (favouriteId) {
+            await db.favorite.delete({
+                where: {
+                    id: favouriteId,
+                },
+            });
+        } else {
+            await db.favorite.create({
+                data: {
+                    topicId,
+                    profileId: user.id,
+                },
+            });
+        }
+        revalidatePath(pathname)
+        return { message: favouriteId ? 'Removed from Faves' : 'Added to Faves' };
+    } catch (error) {
+        return renderError(error)
+    }
+}
+
 
 export const fetchLanguageChunks = async (id: string) => {
     const languageChunk = await db.languageChunk.findMany({

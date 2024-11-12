@@ -1,15 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
-
+import FavoriteToggleButton from './FavoriteToggleButton';
 import { TopicCardProps } from '@/utils/types';
 
 
 function TopicCard({ topic }: { topic: TopicCardProps }) {
-    const { name, nameInChinese, id, topicImage } = topic
+    const { name, nameInChinese, id: topicId, topicImage } = topic
 
     return (
         <article className='group relative'>
-            <Link href={`/topics/${id}`}>
+            <Link href={`/topics/${topicId}`}>
                 <div className='relative h-[300px] mb-2 overflow-hidden rounded-md'>
                     <Image
                         src={topicImage}
@@ -31,7 +31,9 @@ function TopicCard({ topic }: { topic: TopicCardProps }) {
                 <div className='flex justify-between items-center mt-1'>
                 </div>
             </Link>
-            <div className='absolute top-5 right-5 z-5'></div>
+            <div className='absolute top-5 right-5 z-5'>
+                <FavoriteToggleButton topicId={topicId} />
+            </div>
         </article>
     )
 }

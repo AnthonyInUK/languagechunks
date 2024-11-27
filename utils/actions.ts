@@ -188,7 +188,7 @@ export const fetchCategories = async () => {
 
 export const fetchTopics = async ({ search = '', category }: { search?: string, category?: string }) => {
     const searchString = typeof search === 'string' ? search : '';
-    category = "be2fdf2e-c7e9-4456-921c-06c6c919e21d";
+    category = "f192fc5c-86ed-461c-ba89-99df337c83c4";
 
     const cacheKey = `topics:category:${category}:search:${searchString}`;
     //get data from cache
